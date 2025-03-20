@@ -175,3 +175,4 @@ cython_debug/
 .spotifycache
 config/*.json
 *.avi
+!videos/output.avi
