@@ -64,13 +64,19 @@ class SpotifyWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QHBoxLayout()
         self.setLayout(layout)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(15)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(5)
 
         # Album Art
         self.album_art = QtWidgets.QLabel()
-        self.album_art.setFixedSize(100, 100)
-        self.album_art.setStyleSheet("border-radius: 5px;")
+        self.album_art.autoFillBackground()
+        self.album_art.setFixedWidth(105)
+        self.album_art.setFixedHeight(105)
+        # self.album_art.setFixedSize(100, 100)
+        self.album_art.setStyleSheet("""
+            border-radius: 8px;
+            border: 1px solid #333;
+        """)
         layout.addWidget(self.album_art)
 
         # Track Info
@@ -99,7 +105,7 @@ class SpotifyWidget(QtWidgets.QWidget):
         """)
 
         self.progress = QtWidgets.QProgressBar()
-        self.progress.setFixedHeight(4)
+        self.progress.setFixedHeight(5)
         self.progress.setTextVisible(False)
         self.progress.setStyleSheet("""
             QProgressBar {
@@ -230,7 +236,7 @@ class SpotifyWidget(QtWidgets.QWidget):
             image = QtGui.QImage()
             image.loadFromData(data)
             pixmap = QtGui.QPixmap.fromImage(image).scaled(
-                100, 100,
+                75, 75,
                 QtCore.Qt.KeepAspectRatioByExpanding,
                 QtCore.Qt.SmoothTransformation
             )
@@ -330,7 +336,7 @@ class GameOverlay(QtWidgets.QWidget):
             accent.GradientColor = 0xBF000000  # 75% opacity
 
             data = WINDOWCOMPOSITIONATTRIBDATA()
-            data.Attribute = 20  # Correct attribute value
+            data.Attribute = 19  # Correct attribute value
             data.pData = ctypes.pointer(accent)
             data.SizeOfData = ctypes.sizeof(accent)
 
