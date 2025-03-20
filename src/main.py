@@ -283,6 +283,13 @@ class SpotifyWidget(QtWidgets.QWidget):
 
 
 class GameOverlay(QtWidgets.QWidget):
+    SCREEN_INDEX = 2  # 0-based index (0=first, 1=second, 2=third)
+    WINDOW_X = 0    # Position from left edge of target screen
+    WINDOW_Y = 0    # Position from top edge of target screen
+    WINDOW_WIDTH = 300
+    WINDOW_HEIGHT = 200
+    # CENTER, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
+    POSITION_ALIGMENT = "TOP_LEFT"
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -295,7 +302,43 @@ class GameOverlay(QtWidgets.QWidget):
             QtCore.Qt.Tool
         )
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.setGeometry(100, 100, 300, 200)
+        # Get screen information
+        screens = QtWidgets.QDesktopWidget().screenCount()
+
+        # Print screen information
+        for i in range(QtWidgets.QDesktopWidget().screenCount()):
+            geom = QtWidgets.QDesktopWidget().screenGeometry(i)
+            print(f"Screen {i}: {geom.x()}x{geom.y()} ({geom.width()}x{geom.height()})")
+        
+
+        if screens > self.SCREEN_INDEX and self.POSITION_ALIGMENT == "CENTER":
+            screen_geometry = QtWidgets.QDesktopWidget().screenGeometry(self.SCREEN_INDEX)
+            x = screen_geometry.x() + (screen_geometry.width() - self.WINDOW_WIDTH) // 2
+            y = screen_geometry.y() + (screen_geometry.height() - self.WINDOW_HEIGHT) // 2
+            self.setGeometry(x, y, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        elif screens > self.SCREEN_INDEX and self.POSITION_ALIGMENT == "TOP_LEFT":
+            screen_geometry = QtWidgets.QDesktopWidget().screenGeometry(self.SCREEN_INDEX)
+            x = screen_geometry.x() + self.WINDOW_X
+            y = screen_geometry.y() + self.WINDOW_Y
+            self.setGeometry(x, y, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        elif screens > self.SCREEN_INDEX and self.POSITION_ALIGMENT == "TOP_RIGHT":
+            screen_geometry = QtWidgets.QDesktopWidget().screenGeometry(self.SCREEN_INDEX)
+            x = screen_geometry.x() + screen_geometry.width() - self.WINDOW_X - self.WINDOW_WIDTH
+            y = screen_geometry.y() + self.WINDOW_Y
+            self.setGeometry(x, y, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        elif screens > self.SCREEN_INDEX and self.POSITION_ALIGMENT == "BOTTOM_LEFT":
+            screen_geometry = QtWidgets.QDesktopWidget().screenGeometry(self.SCREEN_INDEX)
+            x = screen_geometry.x() + self.WINDOW_X
+            y = screen_geometry.y() + screen_geometry.height() - self.WINDOW_Y - self.WINDOW_HEIGHT
+            self.setGeometry(x, y, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        elif screens > self.SCREEN_INDEX and self.POSITION_ALIGMENT == "BOTTOM_RIGHT":
+            screen_geometry = QtWidgets.QDesktopWidget().screenGeometry(self.SCREEN_INDEX)
+            x = screen_geometry.x() + screen_geometry.width() - self.WINDOW_X - self.WINDOW_WIDTH
+            y = screen_geometry.y() + screen_geometry.height() - self.WINDOW_Y - self.WINDOW_HEIGHT
+            self.setGeometry(x, y, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        else:
+            # Fallback to primary screen
+            self.setGeometry(100, 100, 300, 200)
 
         # Acrylic effect
         self.setAcrylicEffect()
