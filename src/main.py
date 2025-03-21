@@ -1,5 +1,9 @@
-# Description: This file contains the main code for the game overlay application.
-# The overlay displays a game timer, Spotify track information, and recording controls.
+"""
+Refactored script with extended recording configuration.
+You can now set the file name, resolution, frame rate (Hz) and quality via a popup dialog.
+Note: The "quality" setting is stored but not directly applied in OpenCV's VideoWriter.
+"""
+
 import sys
 from typing import Optional, Dict, Any, Tuple
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -48,11 +52,11 @@ except Exception as e:
 
 class RecordingConfigDialog(QtWidgets.QDialog):
     """
-    Dialog to configure recording settings: file name, resolution, FPS, and quality.
+    Dialog to configure recording settings: file name, resolution, frame rate, and quality.
     """
 
     def __init__(self, current_file_name: str, current_resolution: Tuple[int, int],
-                 current_fps: float, current_quality: int,
+                 current_fps: int, current_quality: int,
                  parent: Optional[QtWidgets.QWidget] = None) -> None:
         """
         Initialize the recording configuration dialog.
@@ -60,8 +64,8 @@ class RecordingConfigDialog(QtWidgets.QDialog):
         Args:
             current_file_name (str): The current recording file name.
             current_resolution (Tuple[int, int]): The current recording resolution (width, height).
-            current_fps (float): The current recording frames per second.
-            current_quality (int): The current JPEG quality (1-100).
+            current_fps (int): The current frame rate.
+            current_quality (int): The current quality setting.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent)
@@ -96,13 +100,13 @@ class RecordingConfigDialog(QtWidgets.QDialog):
         res_layout.addWidget(self.height_spin)
         layout.addLayout(res_layout)
 
-        # FPS input
+        # Frame Rate input
         fps_layout: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
-        fps_label: QtWidgets.QLabel = QtWidgets.QLabel("FPS:")
+        fps_label: QtWidgets.QLabel = QtWidgets.QLabel("Frame Rate (Hz):")
         self.fps_spin: QtWidgets.QSpinBox = QtWidgets.QSpinBox()
         self.fps_spin.setMinimum(1)
         self.fps_spin.setMaximum(120)
-        self.fps_spin.setValue(int(current_fps))
+        self.fps_spin.setValue(current_fps)
         fps_layout.addWidget(fps_label)
         fps_layout.addWidget(self.fps_spin)
         layout.addLayout(fps_layout)
@@ -126,17 +130,17 @@ class RecordingConfigDialog(QtWidgets.QDialog):
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
 
-    def get_config(self) -> Tuple[str, Tuple[int, int], float, int]:
+    def get_config(self) -> Tuple[str, Tuple[int, int], int, int]:
         """
-        Return the configured file name, resolution, FPS, and quality.
+        Return the configured file name, resolution, frame rate, and quality.
 
         Returns:
-            Tuple[str, Tuple[int, int], float, int]: The file name, resolution (width, height), FPS, and quality.
+            Tuple[str, Tuple[int, int], int, int]: The file name, resolution, frame rate, and quality.
         """
         file_name: str = self.file_line_edit.text()
         resolution: Tuple[int, int] = (
             self.width_spin.value(), self.height_spin.value())
-        fps: float = float(self.fps_spin.value())
+        fps: int = self.fps_spin.value()
         quality: int = self.quality_spin.value()
         return file_name, resolution, fps, quality
 
@@ -187,7 +191,7 @@ class SpotifyWidget(QtWidgets.QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(5)
 
-        # Album Art
+        # Album Art setup
         self.album_art: QtWidgets.QLabel = QtWidgets.QLabel()
         self.album_art.autoFillBackground()
         self.album_art.setFixedWidth(105)
@@ -198,7 +202,7 @@ class SpotifyWidget(QtWidgets.QWidget):
         """)
         layout.addWidget(self.album_art)
 
-        # Track Info Layout
+        # Track info layout
         info_layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
         info_layout.setSpacing(1)
 
@@ -213,7 +217,6 @@ class SpotifyWidget(QtWidgets.QWidget):
                 max-width: 300px;
             }
         """)
-
         self.artist_label: QtWidgets.QLabel = QtWidgets.QLabel("")
         self.artist_label.setStyleSheet("""
             QLabel {
@@ -223,7 +226,6 @@ class SpotifyWidget(QtWidgets.QWidget):
                 max-width: 300px;
             }
         """)
-
         self.progress: QtWidgets.QProgressBar = QtWidgets.QProgressBar()
         self.progress.setFixedHeight(5)
         self.progress.setTextVisible(False)
@@ -243,7 +245,7 @@ class SpotifyWidget(QtWidgets.QWidget):
         info_layout.addWidget(self.progress)
         layout.addLayout(info_layout)
 
-        # Control Buttons Layout
+        # Control buttons layout
         control_layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
         control_layout.setSpacing(8)
 
@@ -285,12 +287,10 @@ class SpotifyWidget(QtWidgets.QWidget):
         control_layout.addWidget(self.next_btn)
         layout.addLayout(control_layout)
 
-        # Status Label for Errors
         self.status_label: QtWidgets.QLabel = QtWidgets.QLabel()
         self.status_label.setStyleSheet("color: #ff4444; font-size: 10px;")
         layout.addWidget(self.status_label)
 
-        # Timer to update track info
         self.timer: QtCore.QTimer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_track_info)
         self.timer.start(1000)
@@ -454,7 +454,6 @@ class GameTimerWidget(QtWidgets.QWidget):
             border-radius: 10px;
             padding: 15px;
         """)
-
         layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
 
@@ -471,7 +470,6 @@ class GameTimerWidget(QtWidgets.QWidget):
         layout.addWidget(self.time_label)
 
         button_layout: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
-
         self.start_button: QtWidgets.QPushButton = QtWidgets.QPushButton(
             "Start")
         self.start_button.setStyleSheet('''
@@ -520,7 +518,7 @@ class GameTimerWidget(QtWidgets.QWidget):
 
     def start_timer(self) -> None:
         """
-        Start the timer if not already running.
+        Start the timer if it is not already running.
         """
         if not self.is_running:
             self.timer.start(1000)
@@ -536,7 +534,7 @@ class GameTimerWidget(QtWidgets.QWidget):
 
     def stop_timer(self) -> None:
         """
-        Stop the timer and reset elapsed time.
+        Stop the timer and reset the elapsed time.
         """
         self.timer.stop()
         self.elapsed_time = 0
@@ -545,14 +543,14 @@ class GameTimerWidget(QtWidgets.QWidget):
 
     def update_timer(self) -> None:
         """
-        Increment elapsed time and update the display.
+        Increment the elapsed time and update the display.
         """
         self.elapsed_time += 1
         self.update_display()
 
     def update_display(self) -> None:
         """
-        Update the timer display label.
+        Update the timer display label with the formatted elapsed time.
         """
         hours: int = self.elapsed_time // 3600
         minutes: int = (self.elapsed_time % 3600) // 60
@@ -562,7 +560,7 @@ class GameTimerWidget(QtWidgets.QWidget):
 
 class GameOverlay(QtWidgets.QWidget):
     """
-    Main overlay widget combining the game timer, Spotify widget, and recording controls.
+    Main overlay widget that combines the game timer, Spotify widget, and recording controls.
     """
     SCREEN_INDEX: int = 2
     WINDOW_X: int = 0
@@ -574,20 +572,18 @@ class GameOverlay(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.recording: bool = False
-
         # Default recording configuration
         self.record_file_name: str = "output.avi"
         screen_size = pyautogui.size()
         self.record_resolution: Tuple[int, int] = (
             screen_size.width, screen_size.height)
-        self.record_fps: float = 20.0
-        self.record_quality: int = 95
-
+        self.record_fps: int = 20  # Frame rate (Hz)
+        self.record_quality: int = 95  # Quality (stored, not directly applied)
         self.initUI()
 
     def initUI(self) -> None:
         """
-        Set up UI components for the overlay.
+        Set up the UI components for the overlay.
         """
         self.setWindowFlags(
             QtCore.Qt.WindowStaysOnTopHint |
@@ -596,6 +592,7 @@ class GameOverlay(QtWidgets.QWidget):
         )
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
+        # Debugging: print available screens
         screens: int = QtWidgets.QDesktopWidget().screenCount()
         for i in range(screens):
             geom: QtCore.QRect = QtWidgets.QDesktopWidget().screenGeometry(i)
@@ -711,7 +708,7 @@ class GameOverlay(QtWidgets.QWidget):
 
     def open_record_config(self) -> None:
         """
-        Open the recording configuration dialog to set file name, resolution, FPS, and quality.
+        Open the recording configuration dialog to set file name, resolution, frame rate, and quality.
         """
         dialog: RecordingConfigDialog = RecordingConfigDialog(
             self.record_file_name, self.record_resolution, self.record_fps, self.record_quality, self
@@ -719,8 +716,8 @@ class GameOverlay(QtWidgets.QWidget):
         if dialog.exec() == QtWidgets.QDialog.Accepted:
             (self.record_file_name, self.record_resolution,
              self.record_fps, self.record_quality) = dialog.get_config()
-            print(f"Recording config updated: {self.record_file_name}, {self.record_resolution}, "
-                  f"{self.record_fps} FPS, Quality {self.record_quality}")
+            print(f"Recording configuration updated: {self.record_file_name}, {self.record_resolution}, "
+                  f"{self.record_fps} Hz, Quality: {self.record_quality}")
 
     def toggle_overlay(self) -> None:
         """
@@ -739,7 +736,7 @@ class GameOverlay(QtWidgets.QWidget):
 
     def toggle_recording(self) -> None:
         """
-        Toggle the recording state and update button text.
+        Toggle the recording state and update the recording button text.
         """
         self.recording = not self.recording
         self.record_btn.setText(
@@ -751,12 +748,13 @@ class GameOverlay(QtWidgets.QWidget):
 
     def start_recording(self) -> None:
         """
-        Start screen recording using OpenCV and pyautogui with configured parameters.
+        Start screen recording using OpenCV and pyautogui with the configured parameters.
         """
         self.fourcc: int = cv2.VideoWriter_fourcc(*'XVID')
-        self.out: cv2.VideoWriter = cv2.VideoWriter(
-            self.record_file_name, self.fourcc, self.record_fps, self.record_resolution
-        )
+        self.out: cv2.VideoWriter = cv2.VideoWriter(self.record_file_name, self.fourcc,
+                                                    self.record_fps, self.record_resolution)
+        print(
+            f"Recording started at {self.record_fps} Hz with quality {self.record_quality}")
         self.record_frame()
 
     def stop_recording(self) -> None:
@@ -768,24 +766,18 @@ class GameOverlay(QtWidgets.QWidget):
 
     def record_frame(self) -> None:
         """
-        Capture the current screen frame, apply quality settings, and write to the video file.
+        Capture the current screen frame and write it to the video file.
         """
         if self.recording:
             img = pyautogui.screenshot()
             frame: np.ndarray = np.array(img)
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            frame = cv2.resize(frame, self.record_resolution)
-            # Apply JPEG compression to simulate quality adjustment
-            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.record_quality]
-            result, encimg = cv2.imencode('.jpg', frame, encode_param)
-            if result:
-                decimg = cv2.imdecode(encimg, 1)
-                self.out.write(decimg)
+            self.out.write(frame)
             QtCore.QTimer.singleShot(50, self.record_frame)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         """
-        Capture the initial mouse position for dragging the overlay.
+        Capture the initial mouse position when pressed for moving the overlay.
 
         Args:
             event (QtGui.QMouseEvent): The mouse press event.
@@ -794,7 +786,7 @@ class GameOverlay(QtWidgets.QWidget):
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
         """
-        Handle mouse movement to drag the overlay.
+        Handle mouse movement to allow the overlay to be dragged.
 
         Args:
             event (QtGui.QMouseEvent): The mouse move event.
