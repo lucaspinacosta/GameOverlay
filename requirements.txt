@@ -1,0 +1,7 @@
+PyQt5
+PyQtWebEngine
+pywin32
+opencv-python
+pyautogui
+numpy
+spotipy

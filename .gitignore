@@ -176,3 +176,4 @@ cython_debug/
 config/*.json
 *.avi
 !videos/output.avi
+!config/config_example.json

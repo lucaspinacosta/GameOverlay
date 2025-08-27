@@ -1,0 +1,20 @@
+{
+  "spotify": {
+    "client_id": "your_spotify_client_id",
+    "client_secret": "your_spotify_client_secret"
+  },
+  "recording": {
+    "file_name": "output.avi",
+    "resolution": [1920, 1080],
+    "fps": 30,
+    "quality": 95
+  },
+  "overlay": {
+    "screen_index": 0,
+    "window_x": 100,
+    "window_y": 100,
+    "window_width": 300,
+    "window_height": 200,
+    "position_alignment": "TOP_LEFT"
+  }
+}
