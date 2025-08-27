@@ -5,3 +5,6 @@ opencv-python
 pyautogui
 numpy
 spotipy
+pyscreeze
+Pillow
+psutil
