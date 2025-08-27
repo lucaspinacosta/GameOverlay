@@ -572,14 +572,35 @@ class GameOverlay(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.recording: bool = False
+        self.config: Dict[str, Any] = self.load_config()
+        
         # Default recording configuration
-        self.record_file_name: str = "output.avi"
         screen_size = pyautogui.size()
-        self.record_resolution: Tuple[int, int] = (
-            screen_size.width, screen_size.height)
-        self.record_fps: int = 20  # Frame rate (Hz)
-        self.record_quality: int = 95  # Quality (stored, not directly applied)
+        self.record_resolution: Tuple[int, int] = (screen_size.width, screen_size.height)
+        
+        rec_config = self.config.get("recording", {})
+        self.record_file_name = rec_config.get("file_name", "output.avi")
+        self.record_resolution = tuple(rec_config.get(
+            "resolution", (screen_size.width, screen_size.height)))
+        self.record_fps = rec_config.get("fps", 30)
+        self.record_quality = rec_config.get("quality", 95)
         self.initUI()
+
+    def load_config(self) -> Dict[str, Any]:
+        """
+        Load configuration from a JSON file.
+
+        Returns:
+            dict: Configuration dictionary.
+        """
+        config_path: str = os.path.join(os.path.dirname(
+            __file__), '..', 'config', 'config.json')
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading config: {e}")
+            return {}
 
     def initUI(self) -> None:
         """
